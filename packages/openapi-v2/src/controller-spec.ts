@@ -5,7 +5,6 @@
 
 import {
   MetadataInspector,
-  ClassDecoratorFactory,
   MethodDecoratorFactory,
   DecoratorFactory,
 } from '@loopback/context';
@@ -18,7 +17,6 @@ import {
 } from '@loopback/openapi-spec';
 
 import {getJsonSchema} from '@loopback/repository-json-schema';
-
 import {ControllerKeys} from './keys';
 import {jsonToSchemaObject} from './json-to-schema';
 import {isReadableStream} from './generate-schema';
@@ -27,7 +25,6 @@ import * as _ from 'lodash';
 const debug = require('debug')('loopback:rest:router:metadata');
 
 // tslint:disable:no-any
-
 export interface ControllerSpec {
   /**
    * The base path on which the Controller API is served.
@@ -46,34 +43,11 @@ export interface ControllerSpec {
    */
   definitions?: DefinitionsObject;
 }
-/**
- * Decorate the given Controller constructor with metadata describing
- * the HTTP/REST API the Controller implements/provides.
- *
- * `@api` can be applied to controller classes. For example,
- * ```
- * @api({basePath: '/my'})
- * class MyController {
- *   // ...
- * }
- * ```
- *
- * @param spec OpenAPI specification describing the endpoints
- * handled by this controller
- *
- * @decorator
- */
-export function api(spec: ControllerSpec) {
-  return ClassDecoratorFactory.createDecorator<ControllerSpec>(
-    ControllerKeys.CLASS_KEY,
-    spec,
-  );
-}
 
 /**
  * Data structure for REST related metadata
  */
-interface RestEndpoint {
+export interface RestEndpoint {
   verb: string;
   path: string;
   spec?: OperationObject;
@@ -229,83 +203,4 @@ export function getControllerSpec(constructor: Function): ControllerSpec {
     );
   }
   return spec;
-}
-
-/**
- * Expose a Controller method as a REST API operation
- * mapped to `GET` request method.
- *
- * @param path The URL path of this operation, e.g. `/product/{id}`
- * @param spec The OpenAPI specification describing parameters and responses
- *   of this operation.
- */
-export function get(path: string, spec?: OperationObject) {
-  return operation('get', path, spec);
-}
-
-/**
- * Expose a Controller method as a REST API operation
- * mapped to `POST` request method.
- *
- * @param path The URL path of this operation, e.g. `/product/{id}`
- * @param spec The OpenAPI specification describing parameters and responses
- *   of this operation.
- */
-export function post(path: string, spec?: OperationObject) {
-  return operation('post', path, spec);
-}
-
-/**
- * Expose a Controller method as a REST API operation
- * mapped to `PUT` request method.
- *
- * @param path The URL path of this operation, e.g. `/product/{id}`
- * @param spec The OpenAPI specification describing parameters and responses
- *   of this operation.
- */
-export function put(path: string, spec?: OperationObject) {
-  return operation('put', path, spec);
-}
-
-/**
- * Expose a Controller method as a REST API operation
- * mapped to `PATCH` request method.
- *
- * @param path The URL path of this operation, e.g. `/product/{id}`
- * @param spec The OpenAPI specification describing parameters and responses
- *   of this operation.
- */
-export function patch(path: string, spec?: OperationObject) {
-  return operation('patch', path, spec);
-}
-
-/**
- * Expose a Controller method as a REST API operation
- * mapped to `DELETE` request method.
- *
- * @param path The URL path of this operation, e.g. `/product/{id}`
- * @param spec The OpenAPI specification describing parameters and responses
- *   of this operation.
- */
-export function del(path: string, spec?: OperationObject) {
-  return operation('delete', path, spec);
-}
-
-/**
- * Expose a Controller method as a REST API operation.
- *
- * @param verb HTTP verb, e.g. `GET` or `POST`.
- * @param path The URL path of this operation, e.g. `/product/{id}`
- * @param spec The OpenAPI specification describing parameters and responses
- *   of this operation.
- */
-export function operation(verb: string, path: string, spec?: OperationObject) {
-  return MethodDecoratorFactory.createDecorator<Partial<RestEndpoint>>(
-    ControllerKeys.METHODS_KEY,
-    {
-      verb,
-      path,
-      spec,
-    },
-  );
 }
