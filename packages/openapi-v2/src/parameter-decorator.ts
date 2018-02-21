@@ -19,7 +19,7 @@ import {
   MethodParameterDecoratorFactory,
 } from '@loopback/context';
 
-import {ControllerKeys} from './keys';
+import {OAI2Keys} from './keys';
 import {getSchemaForBodyParam, getTypeForNonBodyParam} from './generate-schema';
 
 const paramDecoratorStyle = Symbol('ParamDecoratorStyle');
@@ -104,7 +104,7 @@ export function param(paramSpec: ParameterObject) {
       }
       targetWithParamStyle[paramDecoratorStyle] = 'parameter';
       ParameterDecoratorFactory.createDecorator<ParameterObject>(
-        ControllerKeys.PARAMETERS_KEY,
+        OAI2Keys.PARAMETERS_KEY,
         paramSpec,
       )(target, member, descriptorOrIndex);
     } else {
@@ -116,7 +116,7 @@ export function param(paramSpec: ParameterObject) {
       }
       targetWithParamStyle[paramDecoratorStyle] = 'method';
       RestMethodParameterDecoratorFactory.createDecorator<ParameterObject>(
-        ControllerKeys.METHODS_WITH_PARAMETERS_KEY,
+        OAI2Keys.METHODS_WITH_PARAMETERS_KEY,
         paramSpec,
       )(target, member, descriptorOrIndex);
     }

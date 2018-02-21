@@ -6,7 +6,7 @@
 import {OperationObject} from '@loopback/openapi-spec';
 import {MethodDecoratorFactory} from '@loopback/context';
 import {RestEndpoint} from './controller-spec';
-import {ControllerKeys} from './keys';
+import {OAI2Keys} from './keys';
 
 /**
  * Expose a Controller method as a REST API operation
@@ -78,7 +78,7 @@ export function del(path: string, spec?: OperationObject) {
  */
 export function operation(verb: string, path: string, spec?: OperationObject) {
   return MethodDecoratorFactory.createDecorator<Partial<RestEndpoint>>(
-    ControllerKeys.METHODS_KEY,
+    OAI2Keys.METHODS_KEY,
     {
       verb,
       path,

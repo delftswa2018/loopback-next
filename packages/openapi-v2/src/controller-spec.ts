@@ -17,7 +17,7 @@ import {
 } from '@loopback/openapi-spec';
 
 import {getJsonSchema} from '@loopback/repository-json-schema';
-import {ControllerKeys} from './keys';
+import {OAI2Keys} from './keys';
 import {jsonToSchemaObject} from './json-to-schema';
 import {isReadableStream} from './generate-schema';
 import * as _ from 'lodash';
@@ -61,7 +61,7 @@ function resolveControllerSpec(constructor: Function): ControllerSpec {
   debug(`Retrieving OpenAPI specification for controller ${constructor.name}`);
 
   let spec = MetadataInspector.getClassMetadata<ControllerSpec>(
-    ControllerKeys.CLASS_KEY,
+    OAI2Keys.CLASS_KEY,
     constructor,
   );
   if (spec) {
@@ -73,7 +73,7 @@ function resolveControllerSpec(constructor: Function): ControllerSpec {
 
   let endpoints =
     MetadataInspector.getAllMethodMetadata<RestEndpoint>(
-      ControllerKeys.METHODS_KEY,
+      OAI2Keys.METHODS_KEY,
       constructor.prototype,
     ) || {};
 
@@ -105,13 +105,13 @@ function resolveControllerSpec(constructor: Function): ControllerSpec {
 
     debug('  processing parameters for method %s', op);
     let params = MetadataInspector.getAllParameterMetadata<ParameterObject>(
-      ControllerKeys.PARAMETERS_KEY,
+      OAI2Keys.PARAMETERS_KEY,
       constructor.prototype,
       op,
     );
     if (params == null) {
       params = MetadataInspector.getMethodMetadata<ParameterObject[]>(
-        ControllerKeys.METHODS_WITH_PARAMETERS_KEY,
+        OAI2Keys.METHODS_WITH_PARAMETERS_KEY,
         constructor.prototype,
         op,
       );
@@ -190,14 +190,14 @@ function resolveControllerSpec(constructor: Function): ControllerSpec {
  */
 export function getControllerSpec(constructor: Function): ControllerSpec {
   let spec = MetadataInspector.getClassMetadata<ControllerSpec>(
-    ControllerKeys.CONTROLLER_SPEC_KEY,
+    OAI2Keys.CONTROLLER_SPEC_KEY,
     constructor,
     {ownMetadataOnly: true},
   );
   if (!spec) {
     spec = resolveControllerSpec(constructor);
     MetadataInspector.defineMetadata(
-      ControllerKeys.CONTROLLER_SPEC_KEY,
+      OAI2Keys.CONTROLLER_SPEC_KEY,
       spec,
       constructor,
     );

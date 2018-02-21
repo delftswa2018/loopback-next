@@ -5,7 +5,7 @@
 
 import {ControllerSpec} from './controller-spec';
 import {ClassDecoratorFactory} from '@loopback/context';
-import {ControllerKeys} from './keys';
+import {OAI2Keys} from './keys';
 
 /**
  * Decorate the given Controller constructor with metadata describing
@@ -26,7 +26,7 @@ import {ControllerKeys} from './keys';
  */
 export function api(spec: ControllerSpec) {
   return ClassDecoratorFactory.createDecorator<ControllerSpec>(
-    ControllerKeys.CLASS_KEY,
+    OAI2Keys.CLASS_KEY,
     spec,
   );
 }
