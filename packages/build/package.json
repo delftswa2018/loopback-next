@@ -23,6 +23,7 @@
     "source-map-support": "^0.5.3",
     "strong-docs": "^1.9.1",
     "tslint": "^5.9.1",
+    "tslint-microsoft-contrib": "^5.0.3",
     "typescript": "^2.6.2"
   },
   "bin": {

@@ -28,7 +28,7 @@
     "coverage": "open coverage/index.html",
     "lint": "npm run prettier:check && npm run tslint",
     "lint:fix": "npm run prettier:fix && npm run tslint:fix",
-    "tslint": "node packages/build/bin/run-tslint --project tsconfig.json",
+    "tslint": "node packages/build/bin/run-tslint --project tsconfig.json -o ts_log",
     "tslint:fix": "npm run tslint -- --fix",
     "prettier:cli": "node packages/build/bin/run-prettier \"**/*.ts\"",
     "prettier:check": "npm run prettier:cli -- -l",
@@ -47,5 +47,10 @@
       "path": "./node_modules/cz-conventional-changelog"
     }
   },
-  "copyright.owner": "IBM Corp."
+  "copyright.owner": "IBM Corp.",
+  "dependencies": {
+    "tslint": "^5.1.0",
+    "tslint-microsoft-contrib": "^5.0.3",
+    "typescript": "^2.7.2"
+  }
 }
