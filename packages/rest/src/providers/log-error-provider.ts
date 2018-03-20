@@ -6,8 +6,6 @@
 import {Provider} from '@loopback/context';
 import {ServerRequest} from 'http';
 import {LogError} from '../internal-types';
-import * as debugModule from 'debug';
-const debug = debugModule('loopback:rest:error');
 
 export class LogErrorProvider implements Provider<LogError> {
   value(): LogError {
@@ -15,11 +13,11 @@ export class LogErrorProvider implements Provider<LogError> {
   }
 
   action(err: Error, statusCode: number, req: ServerRequest) {
-    if (statusCode < 400) {
+    if (statusCode < 500) {
       return;
     }
 
-    debug(
+    console.error(
       'Unhandled error in %s %s: %s %s',
       req.method,
       req.url,

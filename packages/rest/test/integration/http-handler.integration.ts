@@ -6,7 +6,6 @@
 import {
   HttpHandler,
   DefaultSequence,
-  ServerRequest,
   writeResultToResponse,
   parseOperationArgs,
   RestBindings,
@@ -14,15 +13,14 @@ import {
   InvokeMethodProvider,
   RejectProvider,
 } from '../..';
-import {ControllerSpec, get} from '@loopback/openapi-v2';
+import {ControllerSpec, get} from '@loopback/openapi-v3';
 import {Context} from '@loopback/context';
 import {Client, createClientForHandler} from '@loopback/testlab';
 import * as HttpErrors from 'http-errors';
-import * as debugModule from 'debug';
-import {ParameterObject} from '@loopback/openapi-spec';
+import {ParameterObject, RequestBodyObject} from '@loopback/openapi-v3-types';
 import {anOpenApiSpec, anOperationSpec} from '@loopback/openapi-spec-builder';
+import {createUnexpectedHttpErrorLogger} from '../helpers';
 
-const debug = debugModule('loopback:rest:test');
 const SequenceActions = RestBindings.SequenceActions;
 
 describe('HttpHandler', () => {
@@ -233,68 +231,7 @@ describe('HttpHandler', () => {
     }
   });
 
-  context('with a formData-parameter route', () => {
-    beforeEach(givenFormDataParamController);
-
-    it('returns the value sent in json-encoded body', () => {
-      return client
-        .post('/show-formdata')
-        .send({key: 'value'})
-        .expect(200, 'value');
-    });
-
-    it('rejects url-encoded request body', () => {
-      logErrorsExcept(415);
-      return client
-        .post('/show-formdata')
-        .send('key=value')
-        .expect(415);
-    });
-
-    it('returns 400 for malformed JSON body', () => {
-      logErrorsExcept(400);
-      return client
-        .post('/show-formdata')
-        .set('content-type', 'application/json')
-        .send('malformed-json')
-        .expect(400);
-    });
-
-    function givenFormDataParamController() {
-      const spec = anOpenApiSpec()
-        .withOperation('post', '/show-formdata', {
-          'x-operation-name': 'showFormData',
-          parameters: [
-            <ParameterObject>{
-              name: 'key',
-              in: 'formData',
-              description: 'Any value.',
-              required: true,
-              type: 'string',
-            },
-          ],
-          responses: {
-            200: {
-              schema: {
-                type: 'string',
-              },
-              description: '',
-            },
-          },
-        })
-        .build();
-
-      class RouteParamController {
-        async showFormData(key: string): Promise<string> {
-          return key;
-        }
-      }
-
-      givenControllerClass(RouteParamController, spec);
-    }
-  });
-
-  context('with a body-parameter route', () => {
+  context('with a body request route', () => {
     beforeEach(givenBodyParamController);
 
     it('returns the value sent in json-encoded body', () => {
@@ -329,19 +266,23 @@ describe('HttpHandler', () => {
       const spec = anOpenApiSpec()
         .withOperation('post', '/show-body', {
           'x-operation-name': 'showBody',
-          parameters: [
-            <ParameterObject>{
-              name: 'data',
-              in: 'body',
-              description: 'Any object value.',
-              required: true,
-              schema: {type: 'object'},
+          requestBody: <RequestBodyObject>{
+            description: 'Any object value.',
+            required: true,
+            content: {
+              'application/json': {
+                schema: {type: 'object'},
+              },
             },
-          ],
+          },
           responses: {
             200: {
-              schema: {
-                type: 'object',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                  },
+                },
               },
               description: '',
             },
@@ -473,7 +414,7 @@ describe('HttpHandler', () => {
       }
 
       givenControllerClass(TestController, spec);
-      logErrorsExcept(400);
+      logErrorsExcept(500);
 
       await client.get('/hello').expect(500, {
         statusCode: 500,
@@ -490,7 +431,9 @@ describe('HttpHandler', () => {
     rootContext
       .bind(SequenceActions.INVOKE_METHOD)
       .toProvider(InvokeMethodProvider);
-    rootContext.bind(SequenceActions.LOG_ERROR).to(logger);
+    rootContext
+      .bind(SequenceActions.LOG_ERROR)
+      .to(createUnexpectedHttpErrorLogger());
     rootContext.bind(SequenceActions.SEND).to(writeResultToResponse);
     rootContext.bind(SequenceActions.REJECT).toProvider(RejectProvider);
 
@@ -500,20 +443,10 @@ describe('HttpHandler', () => {
     rootContext.bind(RestBindings.HANDLER).to(handler);
   }
 
-  let skipStatusCode = 200;
-  function logger(err: Error, statusCode: number, req: ServerRequest) {
-    if (statusCode === skipStatusCode) return;
-    debug(
-      'Unhandled error in %s %s: %s %s',
-      req.method,
-      req.url,
-      statusCode,
-      err.stack || err,
-    );
-  }
-
   function logErrorsExcept(ignoreStatusCode: number) {
-    skipStatusCode = ignoreStatusCode;
+    rootContext
+      .bind(SequenceActions.LOG_ERROR)
+      .to(createUnexpectedHttpErrorLogger(ignoreStatusCode));
   }
 
   function givenControllerClass(
@@ -527,7 +460,10 @@ describe('HttpHandler', () => {
   function givenClient() {
     client = createClientForHandler((req, res) => {
       handler.handleRequest(req, res).catch(err => {
-        debug('Request failed.', err.stack);
+        // This should never happen. If we ever get here,
+        // then it means "handler.handlerRequest()" crashed unexpectedly.
+        // We need to make a lot of helpful noise in such case.
+        console.error('Request failed.', err.stack);
         if (res.headersSent) return;
         res.statusCode = 500;
         res.end();

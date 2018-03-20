@@ -1,6 +1,6 @@
 {
   "name": "@loopback/repository",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Repository based persistence for LoopBack 4",
   "engines": {
     "node": ">=8"
@@ -15,18 +15,18 @@
     "pretest": "npm run build",
     "test": "lb-mocha \"DIST/test/unit/**/*.js\" \"DIST/test/acceptance/**/*.js\"",
     "unit": "lb-mocha \"DIST/test/unit/**/*.js\"",
-    "verify": "npm pack && tar xf loopback-juggler*.tgz && tree package && npm run clean"
+    "verify": "npm pack && tar xf loopback-repository*.tgz && tree package && npm run clean"
   },
   "author": "IBM",
   "copyright.owner": "IBM Corp.",
   "license": "MIT",
   "devDependencies": {
-    "@loopback/build": "^0.1.1",
-    "@loopback/testlab": "^0.1.1"
+    "@loopback/build": "^0.2.0",
+    "@loopback/testlab": "^0.2.0"
   },
   "dependencies": {
-    "@loopback/context": "^0.1.1",
-    "@loopback/core": "^0.1.1",
+    "@loopback/context": "^0.2.0",
+    "@loopback/core": "^0.2.0",
     "loopback-datasource-juggler": "^3.15.2"
   },
   "files": [

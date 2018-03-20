@@ -11,9 +11,10 @@ import {
   RestServer,
   RestComponent,
   RestApplication,
+  SequenceActions,
 } from '../../..';
 
-import {api, get, param} from '@loopback/openapi-v2';
+import {api, get, post, param, requestBody} from '@loopback/openapi-v3';
 
 import {Application} from '@loopback/core';
 
@@ -21,12 +22,13 @@ import {
   ParameterObject,
   OperationObject,
   ResponseObject,
-} from '@loopback/openapi-spec';
+} from '@loopback/openapi-v3-types';
 
 import {expect, Client, createClientForHandler} from '@loopback/testlab';
 import {anOpenApiSpec, anOperationSpec} from '@loopback/openapi-spec-builder';
 import {inject, Context} from '@loopback/context';
 import {ControllerClass} from '../../../src/router/routing-table';
+import {createUnexpectedHttpErrorLogger} from '../../helpers';
 
 /* # Feature: Routing
  * - In order to build REST APIs
@@ -104,8 +106,7 @@ describe('Routing', () => {
   it('allows controllers to define params via decorators', async () => {
     class MyController {
       @get('/greet')
-      @param.query.string('name')
-      greet(name: string) {
+      greet(@param.query.string('name') name: string) {
         return `hello ${name}`;
       }
     }
@@ -118,6 +119,44 @@ describe('Routing', () => {
         // Then I get the result `hello world` from the `Method`
         .expect('hello world')
     );
+  });
+
+  it('allows controllers to define requestBody via decorator', async () => {
+    class MyController {
+      @post('/greet')
+      greet(@requestBody() message: object) {
+        return message;
+      }
+    }
+    const app = givenAnApplication();
+    const server = await givenAServer(app);
+    givenControllerInApp(app, MyController);
+    const greeting = {greeting: 'hello world'};
+    return whenIMakeRequestTo(server)
+      .post('/greet')
+      .send(greeting)
+      .expect(greeting);
+  });
+
+  it('allows mixed use of @requestBody and @param', async () => {
+    class MyController {
+      @post('/greet')
+      greet(
+        @param.header.string('language') language: string,
+        @requestBody() message: object,
+      ) {
+        return Object.assign(message, {language: language});
+      }
+    }
+    const app = givenAnApplication();
+    const server = await givenAServer(app);
+    givenControllerInApp(app, MyController);
+
+    return whenIMakeRequestTo(server)
+      .post('/greet')
+      .set('language', 'English')
+      .send({greeting: 'hello world'})
+      .expect({greeting: 'hello world', language: 'English'});
   });
 
   it('allows controllers to use method DI with mixed params', async () => {
@@ -176,6 +215,8 @@ describe('Routing', () => {
     app.bind('hello.prefix').to('Hello');
     const server = await givenAServer(app);
     givenControllerInApp(app, MyController);
+    suppressErrorLogsForExpectedHttpError(app, 500);
+
     return expect(whenIMakeRequestTo(server).get('/greet?firstName=John'))
       .to.be.rejectedWith(
         'Cannot resolve injected arguments for ' +
@@ -238,7 +279,7 @@ describe('Routing', () => {
       }
 
       async getFlag(): Promise<string> {
-        return this.ctx.get('flag');
+        return this.ctx.get<string>('flag');
       }
     }
     givenControllerInApp(app, FlagController);
@@ -572,6 +613,16 @@ describe('Routing', () => {
     app.component(RestComponent);
     return app;
   }
+
+  function suppressErrorLogsForExpectedHttpError(
+    app: Application,
+    skipStatusCode: number,
+  ) {
+    app
+      .bind(SequenceActions.LOG_ERROR)
+      .to(createUnexpectedHttpErrorLogger(skipStatusCode));
+  }
+
   async function givenAServer(app: Application) {
     return await app.getServer(RestServer);
   }
