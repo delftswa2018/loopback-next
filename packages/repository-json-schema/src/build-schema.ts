@@ -176,5 +176,12 @@ export function modelToJsonSchema(ctor: Function): JsonDefinition {
       result.required.push(p);
     }
   }
+
+  const Ajv = require('ajv');
+  const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
+
+  const valid = ajv.validate(result);
+  if (!valid) console.log(ajv.errors);
+
   return result;
 }
